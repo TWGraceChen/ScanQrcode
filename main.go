@@ -8,6 +8,8 @@ import (
     _ "github.com/lib/pq"
     "log"
     "time"
+    "github.com/spf13/viper"
+    "os"
 )
 
 
@@ -19,15 +21,13 @@ type ScanData struct {
 
 var (
     db *sql.DB
-)
-
-
-var (
-    dbHost = "127.0.0.1"
-    dbPort = 5432
-    dbUser = "postgres"
-    dbPassword = "1234"
-    dbDbname = "postgres"
+    dbHost string
+    dbPort string
+    dbUser string
+    dbPassword string
+    dbDbname string
+    serviceName string
+    port string
 )
 
 func handleScan(w http.ResponseWriter, r *http.Request) {
@@ -96,9 +96,52 @@ func connect() (db *sql.DB, err error) {
 	return
 }
 
+func readConfig() (err error) {
+    if _, err := os.Stat("config.yaml"); err == nil {
+        v := viper.New()
+        v.SetConfigName("config")
+        v.SetConfigType("yaml")
+        v.AddConfigPath(".")
+        err = v.ReadInConfig()
+        if err != nil {
+            return err
+    
+        }
+        
+        serviceName = v.GetString("service.name")
+        port = v.GetString("service.port")
+        dbHost = v.GetString("db.host")
+        dbPort = v.GetString("db.port")
+        dbUser = v.GetString("db.user")
+        dbPassword = v.GetString("db.password")
+        dbDbname = v.GetString("db.database")
+
+
+        log.Println("Read config file Success.")
+     } else {
+        serviceName = os.Getenv("name")
+        port = os.Getenv("port")
+        dbHost = os.Getenv("host")
+        dbPort = os.Getenv("port")
+        dbUser = os.Getenv("user")
+        dbPassword = os.Getenv("password")
+        dbDbname = os.Getenv("database")
+        log.Println("Read env Success.")
+     }
+    
+	return nil
+}
+
 func main() {
-	// init database
+	// read config file
     var err error
+    err = readConfig()
+    if err != nil {
+        log.Fatal("[Error] Loading config failed: ", err)
+    }
+    
+    
+    // init database
     db, err = connect()
 	if err = db.Ping(); err != nil {
 		log.Fatal("[Error] Init Database failed:", err)
@@ -113,6 +156,6 @@ func main() {
     
     http.Handle("/", http.FileServer(http.Dir("static")))
 	http.HandleFunc("/process-scan", handleScan)
-	fmt.Println("Server listening on :8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Server listening on :"+port)
+	http.ListenAndServe(":"+port, nil)
 }

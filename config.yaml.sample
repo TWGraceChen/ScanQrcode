@@ -1,0 +1,10 @@
+service:
+  name: <web name>
+  port: <port>
+ 
+db:
+  host: <postgres ip>
+  port: <postgres port>
+  user: <user name>
+  password: <password>
+  database: <db name>
