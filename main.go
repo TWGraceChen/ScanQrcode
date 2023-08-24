@@ -121,10 +121,10 @@ func readConfig() (err error) {
      } else {
         serviceName = os.Getenv("name")
         port = os.Getenv("port")
-        dbHost = os.Getenv("host")
-        dbPort = os.Getenv("port")
-        dbUser = os.Getenv("user")
-        dbPassword = os.Getenv("password")
+        dbHost = os.Getenv("dbhost")
+        dbPort = os.Getenv("dbport")
+        dbUser = os.Getenv("dbuser")
+        dbPassword = os.Getenv("dbpassword")
         dbDbname = os.Getenv("database")
         log.Println("Read env Success.")
      }
