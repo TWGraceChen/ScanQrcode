@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #qr-video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #qr-results {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #cam-qr-result {
+            font-size: 16px;
+            color: teal;
+            word-wrap: break-word;
+            margin-top: 10px;
+        }
+
+        #cam-qr-result-timestamp {
+            font-size: 12px;
+            color: #999;
+            display: block;
+        }
+
+        #cam-list {
+            padding: 6px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            margin-top: 10px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        b {
+            font-weight: bold;
+        }
+
+        select {
+            padding: 6px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .scan-success-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 128, 0, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 9999;
+        }
+
+        .scan-fail-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(235, 94, 0, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+<h1>第十六届星马亚太特会</h1>
+<div>
+    <b>场次:</b>
+    <select id="act-list">
+        <option value="一早" selected>一早</option>
+        <option value="一晚">一晚</option>
+        <option value="二早">二早</option>
+        <option value="二晚">二晚</option>
+        <option value="三早">三早</option>
+    </select>
+</div>
+<div>
+    <video id="qr-video"></video>
+    <div id="qr-results" style="display: none;">
+        <b>Detected QR Code:</b>
+        <p id="cam-qr-result">None</p>
+        <p id="cam-qr-result-timestamp"></p>
+    </div>
+    <div>
+        <b>Camera:</b>
+        <select id="cam-list">
+            <option value="environment" selected>Environment Facing (default)</option>
+        </select>
+    </div>
+</div>
+<script type="module">
+    import QrScanner from "./qr-scanner.min.js";
+    const video = document.getElementById('qr-video');
+    const videoContainer = document.getElementById('video-container');
+    const camHasCamera = document.getElementById('cam-has-camera');
+    const camList = document.getElementById('cam-list');
+    const camQrResult = document.getElementById('cam-qr-result');
+    const camQrResultTimestamp = document.getElementById('cam-qr-result-timestamp');
+
+    let scanResultMessage;
+    function sendDataToApiServer(data, ts, selectedAct) {
+        // Modify this section to send data to your API server
+        fetch('/process-scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ scannedData: data, scannedTime: ts, selectedAct: selectedAct }),
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('API request failed');
+            }
+        })
+        .then(responseData => {
+            console.log('API response:', responseData);
+
+            // API call successful
+            // Handle success if needed
+
+            // Show scan success message
+            scanResultMessage = document.createElement('div');
+            scanResultMessage.textContent = data + '\n成功報到';
+            scanResultMessage.classList.add('scan-success-message');
+            document.body.appendChild(scanResultMessage);
+        })
+        .catch(error => {
+            console.error('Error sending data to API:', error);
+
+            // API call failed
+            // Handle error if needed
+
+            // Show error message
+            scanResultMessage = document.createElement('div');
+            scanResultMessage.textContent = '失敗';
+            scanResultMessage.classList.add('scan-fail-message');
+            document.body.appendChild(scanResultMessage);
+        });
+    }
+
+
+    function setResult(label, result) {
+        const scannedData = result.data;
+        if (scannedData && scannedData.trim() !== "") {
+            // pause scanner
+            scanner.pause();
+            console.log(scannedData);
+            label.textContent = scannedData;
+            const timestamp = new Date().toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
+            camQrResultTimestamp.textContent = timestamp;
+            label.style.color = 'teal';
+            clearTimeout(label.highlightTimeout);
+            label.highlightTimeout = setTimeout(() => label.style.color = 'inherit', 100);
+
+            // Get the selected act from the act-list
+            const selectedActElement = document.getElementById('act-list');
+            const selectedAct = selectedActElement.options[selectedActElement.selectedIndex].value;
+
+            // Send scanned data to API server
+            sendDataToApiServer(scannedData,timestamp,selectedAct);
+
+            // Hide scan success message after a delay
+            setTimeout(() => {
+                scanResultMessage.style.display = 'none';
+                // start scanner
+                scanner.start();
+            }, 2000); // 这里设置一个延迟，表示暂停后多久恢复扫描
+        }
+    }
+
+    // ####### Web Cam Scanning #######
+    const scanner = new QrScanner(video, result => setResult(camQrResult, result), {
+        onDecodeError: error => {
+            camQrResult.textContent = error;
+            camQrResult.style.color = 'inherit';
+        },
+        highlightScanRegion: true,
+        highlightCodeOutline: true,
+    });
+
+
+
+    scanner.start().then(() => {
+        // List cameras after the scanner started to avoid listCamera's stream and the scanner's stream being requested
+        // at the same time which can result in listCamera's unconstrained stream also being offered to the scanner.
+        // Note that we can also start the scanner after listCameras, we just have it this way around in the demo to
+        // start the scanner earlier.
+        QrScanner.listCameras(true).then(cameras => cameras.forEach(camera => {
+            const option = document.createElement('option');
+            option.value = camera.id;
+            option.text = camera.label;
+            camList.add(option);
+        }));
+    });
+    camList.addEventListener('change', event => {
+        scanner.setCamera(event.target.value).then(updateFlashAvailability);
+    });
+
+    window.scanner = scanner;
+    scanner.setInversionMode('original'); //original,invert,both
+</script>
+</body>
+</html>
