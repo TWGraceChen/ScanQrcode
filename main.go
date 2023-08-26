@@ -55,11 +55,10 @@ func handleScan(w http.ResponseWriter, r *http.Request) {
         return
     }
     
-    // get system timezone
-    sysTimezone, _ := time.Now().Zone()
-
+    
     // 将解析后的时间转换到系统时区
-    parsedTimeInSysZone := parsedTime.In(time.FixedZone(sysTimezone, 0))
+    loc, _ := time.LoadLocation("Asia/Taipei")
+    parsedTimeInSysZone := parsedTime.In(loc)
 
     // 将转换后的时间重新格式化为原始字符串格式
     ScannedTimeZone := parsedTimeInSysZone.Format(layout)
