@@ -47,13 +47,23 @@ func handleScan(w http.ResponseWriter, r *http.Request) {
     }
 
     layout := "2006-01-02 15:04:05"
-    _, err := time.Parse(layout, data.ScannedTime)
+    parsedTime, err := time.Parse(layout, data.ScannedTime)
     if err != nil {
         log.Printf("Invalid date format: %v", data.ScannedTime)
         w.Header().Set("Content-Type", "application/json")
         http.Error(w, `{"error": "Invalid date format"}`, http.StatusBadRequest)
         return
     }
+    
+    // get system timezone
+    sysTimezone, _ := time.Now().Zone()
+
+    // 将解析后的时间转换到系统时区
+    parsedTimeInSysZone := parsedTime.In(time.FixedZone(sysTimezone, 0))
+
+    // 将转换后的时间重新格式化为原始字符串格式
+    ScannedTimeZone := parsedTimeInSysZone.Format(layout)
+
 
     if len(data.SelectedAct) > 6 {
         log.Printf("Invalid act format: %v", data.SelectedAct)
@@ -69,7 +79,7 @@ func handleScan(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    sqlstat := fmt.Sprintf(`insert into checkin (time, act, id) values ('%v', '%v', '%v')`, data.ScannedTime, data.SelectedAct, data.ScannedData)
+    sqlstat := fmt.Sprintf(`insert into checkin (time, act, id) values ('%v', '%v', '%v')`, ScannedTimeZone, data.SelectedAct, data.ScannedData)
     if _, err := db.Exec(sqlstat); err != nil {
         log.Printf("Failed to save data: %v, error: %v", sqlstat, err)
         w.Header().Set("Content-Type", "application/json")
@@ -84,7 +94,7 @@ func handleScan(w http.ResponseWriter, r *http.Request) {
     if err := json.NewEncoder(w).Encode(response); err != nil {
         log.Printf("Failed to encode JSON response: %v, error: %v", response, err)
         http.Error(w, `{"error": "Failed to encode JSON response"}`, http.StatusInternalServerError)
-        return
+        return  
     }
 }
 
