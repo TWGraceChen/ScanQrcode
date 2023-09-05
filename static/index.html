@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第十六届星马亚太特会報到</title>
+    <title>{{.Title}}</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -98,15 +98,13 @@
     </style>
 </head>
 <body>
-<h1>第十六届星马亚太特会</h1>
+<h1>{{.Title}}</h1>
 <div>
     <b>场次:</b>
     <select id="act-list">
-        <option value="一早" selected>一早</option>
-        <option value="一晚">一晚</option>
-        <option value="二早">二早</option>
-        <option value="二晚">二晚</option>
-        <option value="三早">三早</option>
+        {{range .Acts}}
+            <option value="{{.}}">{{.}}</option>
+        {{end}}
     </select>
 </div>
 <div>

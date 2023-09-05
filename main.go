@@ -10,6 +10,7 @@ import (
     "time"
     "github.com/spf13/viper"
     "os"
+    "html/template"
 )
 
 
@@ -17,6 +18,11 @@ type ScanData struct {
     ScannedData string `json:"scannedData"`
 	ScannedTime string `json:"scannedTime"`
 	SelectedAct string `json:"selectedAct"`
+}
+
+type PageData struct {
+	Title string
+	Acts  []string // 用于存储场次选项的切片
 }
 
 var (
@@ -27,8 +33,30 @@ var (
     dbPassword string
     dbDbname string
     serviceName string
+    options []string
     port string
 )
+
+func handleStatic(w http.ResponseWriter, r *http.Request) {
+	// 定义要替换的标题
+	data := PageData{
+		Title: serviceName,
+		Acts:  options, // 添加场次选项
+	}
+
+	// 解析HTML模板文件
+	tmpl, err := template.ParseFiles("static/index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 使用模板替换{{.Title}}
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
 
 func handleScan(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
@@ -119,6 +147,7 @@ func readConfig() (err error) {
         
         serviceName = v.GetString("service.name")
         port = v.GetString("service.port")
+        options = v.GetStringSlice("service.options")
         dbHost = v.GetString("db.host")
         dbPort = v.GetString("db.port")
         dbUser = v.GetString("db.user")
@@ -163,8 +192,8 @@ func main() {
 	}
 	log.Println("Init Database Success.")
     
-    http.Handle("/", http.FileServer(http.Dir("static")))
-	http.HandleFunc("/process-scan", handleScan)
+	http.HandleFunc("/", handleStatic)
+    http.HandleFunc("/process-scan", handleScan)
 	fmt.Println("Server listening on :"+port)
 	http.ListenAndServe(":"+port, nil)
 }

@@ -1,7 +1,7 @@
 module qrscan
 
-go 1.23
-//go 1.21.0
+//go 1.23
+go 1.21.0
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
