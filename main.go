@@ -182,10 +182,28 @@ func main() {
 	}
 	defer db.Close()
 
-	sqlstat := `create table if not exists checkin (time timestamp,act varchar(20),id varchar(30))`
+	sqlstat := `create table if not exists checkin (time timestamp,act varchar(20),id char(3))`
 	if _, err := db.Exec(sqlstat); err != nil {
 		log.Fatal("[Error] Init Database failed:", err)
 	}
+
+	sqlstat = `drop table if exists act`
+	if _, err := db.Exec(sqlstat); err != nil {
+		log.Fatal("[Error] Init Database failed:", err)
+	}
+
+	sqlstat = `create table if not exists act (name varchar(20))`
+	if _, err := db.Exec(sqlstat); err != nil {
+		log.Fatal("[Error] Init Database failed:", err)
+	}
+
+	for _, name := range options {
+		sqlstat = fmt.Sprintf(`insert into act (name) values ('%v')`, name)
+		if _, err := db.Exec(sqlstat); err != nil {
+			log.Fatal("[Error] Init Database failed:", err)
+		}
+	}
+
 	log.Println("Init Database Success.")
 
 	http.HandleFunc("/", handleStatic)
