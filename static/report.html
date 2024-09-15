@@ -48,11 +48,19 @@
             </div>
             <div class="form-item">
                 <b>次數(大於等於)</b>
-                <input type="text" id="ge" name="ge" />
+                <select id="ge">
+                    {{range .Times}}
+                        <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
             </div>
             <div class="form-item">
                 <b>次數(小於等於)</b>
-                <input type="text" id="le" name="le" />
+                <select id="le">
+                    {{range .Times}}
+                        <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
             </div>
             <button type="button" id="search-button">查詢</button>
         </div>
@@ -138,6 +146,12 @@
                 console.error('Error:', error);
             });
         });
+        
+        // 取得 select 元素
+        const selectElement = document.getElementById('le');
+    
+        // 設定預設選擇最後一個 option
+        selectElement.selectedIndex = selectElement.options.length - 1;
     </script>
     
 </body>

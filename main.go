@@ -68,6 +68,7 @@ type TemplateReport struct {
 	Church []IdName
 	Group  []string
 	Team   []string
+	Times  []int
 }
 
 type PostReport struct {
@@ -435,11 +436,18 @@ func handleReport(w http.ResponseWriter, r *http.Request) {
 	teamGroups := []string{"*"}
 	teamGroups = append(teamGroups, getTeamList()...)
 
+	//time seq
+	var timeseq []int
+	for i := 0; i <= len(actoptions); i++ {
+		timeseq = append(timeseq, i)
+	}
+
 	templatedata := TemplateReport{
 		Title:  serviceName,
 		Church: churchOptions,
 		Group:  groupGroups,
 		Team:   teamGroups,
+		Times:  timeseq,
 	}
 
 	// 解析HTML模板文件
