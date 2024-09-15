@@ -1,0 +1,232 @@
+/* 確保整個頁面可以正常顯示在不同設備上 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* 固定導航欄 */
+nav {
+    width: 100%;
+    background-color: #333;
+    color: white;
+    padding: 0 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+
+/* 導航欄標題 */
+.nav-title {
+    font-size: 1.5rem; /* 使用相對單位 */
+}
+
+/* 導航鏈接 */
+nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem; /* 使用相對單位 */
+    padding: 10px 15px; /* 調整內邊距以適應不同屏幕 */
+    border-radius: 4px;
+}
+nav a.active {
+    background-color: #555; /* 選擇的背景顏色 */
+    color: #fff; /* 選擇的文字顏色 */
+    font-weight: bold; /* 可選：讓當前頁面的文字更加突出 */
+}
+
+
+/* 導航鏈接懸停效果 */
+nav a:hover {
+    background-color: #555;
+}
+
+/* 內容區域 */
+.content {
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* 表單容器 */
+.form-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* 表單項目 */
+.form-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 下拉選單和輸入框 */
+select, input {
+    padding: 8px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%; /* 使其適應不同屏幕 */
+    max-width: 150px;
+}
+
+/* 按鈕 */
+button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* 按鈕懸停效果 */
+button:hover {
+    background-color: #45a049;
+}
+
+/* 表格 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+/* 表格邊框 */
+table, th, td {
+    border: 1px solid black;
+}
+
+/* 表格單元格 */
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+/* 表格頭部 */
+th {
+    background-color: #f2f2f2;
+}
+
+/* QR 圖片 */
+#qr-video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* QR 結果區域 */
+#qr-results {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* QR 結果 */
+#cam-qr-result {
+    font-size: 1rem;
+    color: teal;
+    word-wrap: break-word;
+    margin-top: 10px;
+}
+
+/* QR 結果時間戳 */
+#cam-qr-result-timestamp {
+    font-size: 0.75rem;
+    color: #999;
+    display: block;
+}
+
+/* QR 列表 */
+#cam-list {
+    padding: 6px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    margin-top: 10px;
+}
+
+/* 扫描成功消息 */
+.scan-success-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 128, 0, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 9999;
+}
+
+/* 扫描失败消息 */
+.scan-fail-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(235, 94, 0, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 9999;
+}
+
+/* 響應式設計 */
+@media (max-width: 600px) {
+    .nav-title {
+        font-size: 1.2rem;
+    }
+
+    nav a {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+
+    select, input {
+        font-size: 0.9rem;
+    }
+
+    button {
+        font-size: 0.9rem;
+    }
+
+    #cam-qr-result {
+        font-size: 0.9rem;
+    }
+
+    #cam-qr-result-timestamp {
+        font-size: 0.65rem;
+    }
+
+    .scan-success-message, .scan-fail-message {
+        font-size: 1.2rem;
+    }
+}

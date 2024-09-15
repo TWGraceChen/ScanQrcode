@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-title">{{.Title}}</div>
+        <div>
+            <a href="/">報到</a>
+            <a href="/search" class="active">查詢</a>
+            <a href="/report">報表</a>
+        </div>
+    </nav>
+    <div class="content">
+        <div class="form-container">
+        <div class="form-item">
+            <b>教會</b>
+            <select id="church-list">
+                {{range .Church}}
+                    <option value="{{.Id}}">{{.Name}}</option>
+                {{end}}
+            </select>
+        </div>
+        <div class="form-item">
+            <b>組別</b>
+            <select id="group-list">
+                {{range .Group}}
+                    <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
+        </div>
+        <div class="form-item">
+            <b>Team</b>
+            <select id="team-list">
+                {{range .Team}}
+                    <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
+        </div>
+        <div class="form-item">
+            <b>姓名</b>
+            <input type="text" id="name" name="name" />
+        </div>
+        <div class="form-item">
+            <b>场次</b>
+            <select id="act-list">
+                {{range .Acts}}
+                    <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
+        </div>
+        <button type="button" id="search-button">查詢</button>
+        </div>
+        <!-- Results Table -->
+        <table>
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        document.getElementById('search-button').addEventListener('click', function () {
+            // Get selected values and input values
+            const church = document.getElementById('church-list').value;
+            const group = document.getElementById('group-list').value;
+            const team = document.getElementById('team-list').value;
+            const name = document.getElementById('name').value;
+            const act = document.getElementById('act-list').value;
+    
+            // Create JSON object with the selected values
+            const data = {
+                church: church,
+                group: group,
+                team: team,
+                name: name,
+                act: act
+            };
+    
+            // Send POST request to /search with the JSON data
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log('Success:', result);
+    
+                // Find the table body element
+                const tableBody = document.querySelector('tbody');
+                const tableHead = document.querySelector('thead');
+    
+                // Clear the existing rows in the table body
+                tableBody.innerHTML = '';
+                tableHead.innerHTML = '';
+
+                // Insert the table head
+                const headRow = document.createElement('tr');
+                headRow.innerHTML = `
+                    <th>教會</th>
+                    <th>組別</th>
+                    <th>Team</th>
+                    <th>姓名</th>
+                    <th>场次</th>
+                    <th>時間</th>
+                `;
+                tableHead.appendChild(headRow);
+    
+                if (result.length > 0) {
+                    // Iterate over the results and create new rows
+                    result.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.Church}</td>
+                            <td>${row.Group}</td>
+                            <td>${row.Team}</td>
+                            <td>${row.Name}</td>
+                            <td>${row.Act}</td>
+                            <td>${row.CheckinTime}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                } else {
+                    // If no results, show the "no results" row
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td colspan="6">沒有查詢結果</td>';
+                    tableBody.appendChild(tr);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+    
+</body>
+</html>

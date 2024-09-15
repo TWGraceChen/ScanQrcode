@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-title">{{.Title}}</div>
+        <div>
+            <a href="/" class="active">報到</a>
+            <a href="/search">查詢</a>
+            <a href="/report">報表</a>
+        </div>
+    </nav>
+    
+    <div class="content">
+        <div>
+            <b>场次:</b>
+            <select id="act-list">
+                {{range .Acts}}
+                    <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
+        </div>
+
+        <div>
+            <video id="qr-video" width="300" height="200" style="border: 1px solid black;"></video>
+        </div>
+
+        <div>
+            <b>Camera:</b>
+            <select id="cam-list"></select>
+        </div>
+
+        <p id="result"></p>
+
+        <div id="qr-results" style="display: none;">
+            <p id="cam-qr-result">None</p>
+            <p id="cam-qr-result-timestamp"></p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <script>
+        const codeReader = new ZXing.BrowserQRCodeReader();
+        const videoElement = document.getElementById('qr-video');
+        const cameraSelect = document.getElementById('cam-list');
+        const qrResults = document.getElementById('qr-results');
+        const camQrResult = document.getElementById('cam-qr-result');
+        const camQrResultTimestamp = document.getElementById('cam-qr-result-timestamp');
+
+        // Function to send scanned data to API server
+        function sendDataToApiServer(data, ts, selectedAct) {
+            fetch('/checkin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ scannedData: data, scannedTime: ts, selectedAct: selectedAct }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('API request failed');
+                }
+            })
+            .then(responseData => {
+                console.log('API response:', responseData);
+                // Show scan success message
+                const scanResultMessage = document.createElement('div');
+                scanResultMessage.textContent = data + ' 成功報到';
+                scanResultMessage.classList.add('scan-success-message');
+                document.body.appendChild(scanResultMessage);
+                setTimeout(() => {
+                    scanResultMessage.style.display = 'none'; // Hide success message
+                    qrResults.style.display = 'none'; // Hide QR result elements
+                }, 2000); // Hide after 2 seconds
+            })
+            .catch(error => {
+                console.error('Error sending data to API:', error);
+                // Show error message
+                const scanResultMessage = document.createElement('div');
+                scanResultMessage.textContent = '失敗';
+                scanResultMessage.classList.add('scan-fail-message');
+                document.body.appendChild(scanResultMessage);
+                setTimeout(() => scanResultMessage.style.display = 'none', 2000); // Hide after 2 seconds
+            });
+        }
+
+        // Function to start scanning with the selected camera
+        function startScan(deviceId) {
+            codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err) => {
+                if (result) {
+                    const scannedData = result.text;
+                    const timestamp = new Date().toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
+                    qrResults.style.display = 'block'; // Show QR result elements
+                    camQrResult.textContent = scannedData;
+                    camQrResultTimestamp.textContent = timestamp;
+
+                    // Get the selected act from the act-list
+                    const selectedActElement = document.getElementById('act-list');
+                    const selectedAct = selectedActElement.options[selectedActElement.selectedIndex].value;
+
+                    // Send scanned data to API server
+                    sendDataToApiServer(scannedData, timestamp, selectedAct);
+                }
+                if (err && !(err instanceof ZXing.NotFoundException)) {
+                    console.error(err);
+                }
+            });
+        }
+
+        // Get available video devices (cameras) and populate the select box
+        navigator.mediaDevices.enumerateDevices().then((devices) => {
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Camera ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // Start scanning with the default selected camera
+            if (videoDevices.length > 0) {
+                startScan(videoDevices[0].deviceId);
+            }
+        });
+
+        // When the user selects a different camera, restart the scan
+        cameraSelect.onchange = () => {
+            codeReader.reset();  // Stop current scan
+            startScan(cameraSelect.value);  // Start with the selected camera
+        };
+
+        // Optional: stop scanning when leaving the page
+        window.addEventListener('beforeunload', () => {
+            codeReader.reset();
+        });
+    </script>
+</body>
+</html>
