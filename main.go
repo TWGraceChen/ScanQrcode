@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -22,9 +23,11 @@ var (
 	dbUser      string
 	dbPassword  string
 	dbDbname    string
+	dbSslMode   string
 	serviceName string
 	actoptions  []string
 	port        string
+	queryParam  string
 )
 
 type TemplateScan struct {
@@ -202,15 +205,40 @@ func handleCheckIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error": "Invalid act format"}`, http.StatusBadRequest)
 		return
 	}
+	id := ""
+	if queryParam != "" {
+		parsedURL, err := url.Parse(data.ScannedData)
+		if err != nil {
+			log.Printf("Error parsing URL: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error": "Invalid data format"}`, http.StatusBadRequest)
+			return
+		}
 
-	if len(data.ScannedData) > 3 {
-		log.Printf("Invalid data format: %v", data.ScannedData)
-		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, `{"error": "Invalid data format"}`, http.StatusBadRequest)
-		return
+		queryParams := parsedURL.Query()
+		if params, exists := queryParams[queryParam]; exists {
+			id = params[0]
+			//hotfix
+			id = strings.Replace(id, "doc?code=", "", -1)
+		} else {
+			log.Printf("Error extract param in URL: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error": "Invalid data format"}`, http.StatusBadRequest)
+			return
+		}
+
+	} else {
+		if len(data.ScannedData) > 3 {
+			log.Printf("Invalid data format: %v", data.ScannedData)
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error": "Invalid data format"}`, http.StatusBadRequest)
+			return
+		} else {
+			id = data.ScannedData
+		}
 	}
 
-	sqlstat := fmt.Sprintf(`insert into checkin (time, act, id) values ('%v', '%v', '%v')`, ScannedTimeZone, data.SelectedAct, data.ScannedData)
+	sqlstat := fmt.Sprintf(`insert into checkin (time, act, id) values ('%v', '%v', '%v')`, ScannedTimeZone, data.SelectedAct, id)
 	if _, err := db.Exec(sqlstat); err != nil {
 		log.Printf("Failed to save data: %v, error: %v", sqlstat, err)
 		w.Header().Set("Content-Type", "application/json")
@@ -394,7 +422,7 @@ func handleReport(w http.ResponseWriter, r *http.Request) {
 				  From register b 
 		          INNER JOIN church c on b.church_id = c.id
 				  LEFT JOIN (%v) a on b.id = a.id`, selectstat)
-		query := fmt.Sprintf("select * from (%v %v) %v", selectstat, where, timeswhere)
+		query := fmt.Sprintf("select * from (%v %v) c %v", selectstat, where, timeswhere)
 
 		// query table
 		var searchResult []DetailReport
@@ -465,7 +493,7 @@ func handleReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func connect() (db *sql.DB, err error) {
-	db, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s", dbHost, dbPort, dbUser, dbPassword, dbDbname))
+	db, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbHost, dbPort, dbUser, dbPassword, dbDbname, dbSslMode))
 	if err != nil {
 		return db, err
 	}
@@ -486,22 +514,26 @@ func readConfig() (err error) {
 
 		serviceName = v.GetString("service.name")
 		port = v.GetString("service.port")
+		queryParam = v.GetString("service.param")
 		actoptions = v.GetStringSlice("service.options")
 		dbHost = v.GetString("db.host")
 		dbPort = v.GetString("db.port")
 		dbUser = v.GetString("db.user")
 		dbPassword = v.GetString("db.password")
 		dbDbname = v.GetString("db.database")
+		dbSslMode = v.GetString("db.sslmode")
 
 		log.Println("Read config file Success.")
 	} else {
 		serviceName = os.Getenv("name")
 		port = os.Getenv("port")
+		queryParam = os.Getenv("param")
 		dbHost = os.Getenv("dbhost")
 		dbPort = os.Getenv("dbport")
 		dbUser = os.Getenv("dbuser")
 		dbPassword = os.Getenv("dbpassword")
 		dbDbname = os.Getenv("database")
+		dbSslMode = os.Getenv("sslmode")
 		log.Println("Read env Success.")
 	}
 
@@ -517,13 +549,15 @@ func main() {
 	}
 
 	// init database
-	db, err = connect()
+	if db, err = connect(); err != nil {
+		log.Fatal("[Error] Connect Database failed:", err)
+	}
 	if err = db.Ping(); err != nil {
 		log.Fatal("[Error] Init Database failed:", err)
 	}
 	defer db.Close()
 
-	sqlstat := `create table if not exists checkin (time timestamp,act varchar(20),id char(3))`
+	sqlstat := `create table if not exists checkin (time timestamp,act varchar(20),id char(10))`
 	if _, err := db.Exec(sqlstat); err != nil {
 		log.Fatal("[Error] Init Database failed:", err)
 	}

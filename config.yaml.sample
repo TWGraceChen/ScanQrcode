@@ -2,6 +2,7 @@ service:
   name: <web name>
   port: <port>
   options: ["<opt1>","<opt2>","<opt3>"]
+  param: <query parameter in url for extract scanned id>
  
 db:
   host: <postgres ip>
@@ -9,3 +10,4 @@ db:
   user: <user name>
   password: <password>
   database: <db name>
+  sslmode: disable
