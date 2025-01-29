@@ -528,6 +528,7 @@ func readConfig() (err error) {
 		serviceName = os.Getenv("name")
 		port = os.Getenv("port")
 		queryParam = os.Getenv("param")
+		actoptions = strings.Split(os.Getenv("options"), ",")
 		dbHost = os.Getenv("dbhost")
 		dbPort = os.Getenv("dbport")
 		dbUser = os.Getenv("dbuser")
