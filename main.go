@@ -218,8 +218,6 @@ func handleCheckIn(w http.ResponseWriter, r *http.Request) {
 		queryParams := parsedURL.Query()
 		if params, exists := queryParams[queryParam]; exists {
 			id = params[0]
-			//hotfix
-			id = strings.Replace(id, "doc?code=", "", -1)
 		} else {
 			log.Printf("Error extract param in URL: %v", err)
 			w.Header().Set("Content-Type", "application/json")
@@ -493,7 +491,7 @@ func handleReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func connect() (db *sql.DB, err error) {
-	db, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbHost, dbPort, dbUser, dbPassword, dbDbname, dbSslMode))
+	db, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s", dbHost, dbPort, dbUser, dbPassword, dbDbname))
 	if err != nil {
 		return db, err
 	}
