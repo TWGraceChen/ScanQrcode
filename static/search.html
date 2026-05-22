@@ -19,13 +19,13 @@
     <div class="content">
         <div class="form-container">
             <div class="form-item">
-                <b>姓名</b>
+                <label><b>姓名</b></label>
                 <input type="text" id="name" name="name" />
             </div>
             
             {{range .SearchFields}}
             <div class="form-item">
-                <b>{{.Label}}</b>
+                <label><b>{{.Label}}</b></label>
                 <select id="attr-{{.Key}}" class="dynamic-attr" data-key="{{.Key}}" data-label="{{.Label}}">
                     {{range .Options}}
                         <option value="{{.}}">{{.}}</option>
@@ -35,20 +35,22 @@
             {{end}}
 
             <div class="form-item">
-                <b>場次</b>
+                <label><b>場次</b></label>
                 <select id="act-list">
                     {{range .Acts}}
                         <option value="{{.}}">{{.}}</option>
                     {{end}}
                 </select>
             </div>
-            <button type="button" id="search-button">查詢</button>
+            <button type="button" id="search-button" class="btn btn-primary">查詢</button>
         </div>
         <!-- Results Table -->
-        <table>
-            <thead></thead>
-            <tbody></tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
     <script>
         document.getElementById('search-button').addEventListener('click', function () {

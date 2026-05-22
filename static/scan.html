@@ -6,18 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
     <link rel="stylesheet" type="text/css" href="/static/styles.css">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-    </style>
 </head>
 
 <body>
@@ -30,31 +18,31 @@
             <a href="/admin">管理</a>
         </div>
     </nav>
+    
+    <div id="toast-container" class="toast-container"></div>
 
     <div class="content">
-        <div>
-            <b>場次:</b>
-            <select id="act-list">
-                {{range .Acts}}
-                <option value="{{.}}">{{.}}</option>
-                {{end}}
-            </select>
-        </div>
+        <div class="card scan-container">
+            <div class="form-item" style="width: 100%;">
+                <label><b>場次:</b></label>
+                <select id="act-list">
+                    {{range .Acts}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+            </div>
 
-        <div>
-            <video id="qr-video" width="300" height="200" style="border: 1px solid black;"></video>
-        </div>
+            <video id="qr-video" playsinline></video>
 
-        <div>
-            <b>Camera:</b>
-            <select id="cam-list"></select>
-        </div>
+            <div class="form-item" style="width: 100%;">
+                <label><b>Camera:</b></label>
+                <select id="cam-list"></select>
+            </div>
 
-        <p id="result"></p>
-
-        <div id="qr-results" style="display: none;">
-            <p id="cam-qr-result">None</p>
-            <p id="cam-qr-result-timestamp"></p>
+            <div id="qr-results" style="display: none;">
+                <p id="cam-qr-result">None</p>
+                <p id="cam-qr-result-timestamp"></p>
+            </div>
         </div>
     </div>
 
@@ -66,6 +54,19 @@
         const qrResults = document.getElementById('qr-results');
         const camQrResult = document.getElementById('cam-qr-result');
         const camQrResultTimestamp = document.getElementById('cam-qr-result-timestamp');
+
+        function showToast(message, isSuccess) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${isSuccess ? 'success' : 'error'}`;
+            toast.innerHTML = isSuccess ? `✅ ${message}` : `❌ ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
 
         // Function to send scanned data to API server
         function sendDataToApiServer(data, ts, selectedAct) {
@@ -85,32 +86,35 @@
                 })
                 .then(responseData => {
                     console.log('API response:', responseData);
-                    // Show scan success message
-                    const scanResultMessage = document.createElement('div');
-                    scanResultMessage.textContent = responseData.name + ' 報到成功';
-                    scanResultMessage.classList.add('scan-success-message');
-                    document.body.appendChild(scanResultMessage);
+                    showToast(responseData.name + ' 報到成功', true);
                     setTimeout(() => {
-                        scanResultMessage.style.display = 'none'; // Hide success message
                         qrResults.style.display = 'none'; // Hide QR result elements
                     }, 2000); // Hide after 2 seconds
                 })
                 .catch(error => {
                     console.error('Error sending data to API:', error);
-                    // Show error message
-                    const scanResultMessage = document.createElement('div');
-                    scanResultMessage.textContent = '報到失敗';
-                    scanResultMessage.classList.add('scan-fail-message');
-                    document.body.appendChild(scanResultMessage);
-                    setTimeout(() => scanResultMessage.style.display = 'none', 2000); // Hide after 2 seconds
+                    showToast('報到失敗', false);
                 });
         }
+
+        let lastScannedData = null;
+        let lastScannedTime = 0;
 
         // Function to start scanning with the selected camera
         function startScan(deviceId) {
             codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err) => {
                 if (result) {
                     const scannedData = result.text;
+                    const currentTime = new Date().getTime();
+
+                    // 防抖動 (Debounce)：同一個 QRCode 3秒內不重複觸發
+                    if (scannedData === lastScannedData && (currentTime - lastScannedTime) < 3000) {
+                        return;
+                    }
+                    
+                    lastScannedData = scannedData;
+                    lastScannedTime = currentTime;
+
                     const timestamp = new Date().toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
                     qrResults.style.display = 'block'; // Show QR result elements
                     camQrResult.textContent = scannedData;
@@ -123,7 +127,16 @@
                     // Send scanned data to API server
                     sendDataToApiServer(scannedData, timestamp, selectedAct);
                 }
-                if (err && !(err instanceof ZXing.NotFoundException)) {
+                
+                // 忽略 ZXing 在連續掃描過程中正常的找不到或模糊例外，避免 console 報錯
+                if (err) {
+                    if (ZXing && (
+                        err instanceof ZXing.NotFoundException ||
+                        err instanceof ZXing.ChecksumException ||
+                        err instanceof ZXing.FormatException
+                    )) {
+                        return;
+                    }
                     console.error(err);
                 }
             });

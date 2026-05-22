@@ -1,232 +1,409 @@
-/* 確保整個頁面可以正常顯示在不同設備上 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --success: #10b981;
+    --bg-color: #f8fafc;
+    --surface-color: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --radius: 10px;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* 固定導航欄 */
+/* Glassmorphism Navbar */
 nav {
     width: 100%;
-    background-color: #333;
-    color: white;
-    padding: 0 20px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 24px;
     position: fixed;
     top: 0;
     left: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 60px;
+    height: 64px;
     box-sizing: border-box;
     z-index: 1000;
 }
 
-/* 導航欄標題 */
 .nav-title {
-    font-size: 1.5rem; /* 使用相對單位 */
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.025em;
 }
 
-/* 導航鏈接 */
+nav div {
+    display: flex;
+    gap: 8px;
+}
+
 nav a {
-    color: white;
+    color: var(--text-muted);
     text-decoration: none;
-    font-size: 1rem; /* 使用相對單位 */
-    padding: 10px 15px; /* 調整內邊距以適應不同屏幕 */
-    border-radius: 4px;
-}
-nav a.active {
-    background-color: #555; /* 選擇的背景顏色 */
-    color: #fff; /* 選擇的文字顏色 */
-    font-weight: bold; /* 可選：讓當前頁面的文字更加突出 */
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 }
 
-
-/* 導航鏈接懸停效果 */
 nav a:hover {
-    background-color: #555;
+    color: var(--text-main);
+    background-color: var(--bg-color);
 }
 
-/* 內容區域 */
+nav a.active {
+    background-color: #eff6ff; /* Light blue background */
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Content Container */
 .content {
     margin-top: 80px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+    padding: 24px;
     box-sizing: border-box;
     width: 100%;
+    max-width: 1024px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
-/* 表單容器 */
+/* Card Component */
+.card {
+    background-color: var(--surface-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+/* Forms */
 .form-container {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
+    align-items: flex-end;
+    gap: 16px;
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
 }
 
-/* 表單項目 */
 .form-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 6px;
 }
 
-/* 下拉選單和輸入框 */
-select, input {
-    padding: 8px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%; /* 使其適應不同屏幕 */
-    max-width: 150px;
+.form-item b, .form-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
 }
 
-/* 按鈕 */
-button {
+select, input, textarea {
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    outline: none;
+    box-sizing: border-box;
+    min-width: 160px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+}
+
+select:focus, input:focus, textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+/* Buttons */
+.btn, button {
     padding: 10px 20px;
-    font-size: 1rem;
-    background-color: #4CAF50;
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-top: 10px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* 按鈕懸停效果 */
-button:hover {
-    background-color: #45a049;
+.btn:hover, button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
 }
 
-/* 表格 */
+.btn:active, button:active {
+    transform: translateY(0);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+}
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+}
+
+.btn-success {
+    background-color: var(--success);
+}
+.btn-success:hover {
+    background-color: #059669;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+/* Tables */
+.table-container {
+    background-color: var(--surface-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+    width: 100%;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
-}
-
-/* 表格邊框 */
-table, th, td {
-    border: 1px solid black;
-}
-
-/* 表格單元格 */
-th, td {
-    padding: 8px;
     text-align: left;
 }
 
-/* 表格頭部 */
+th, td {
+    padding: 14px 20px;
+    font-size: 0.9rem;
+}
+
 th {
-    background-color: #f2f2f2;
+    background-color: #f8fafc;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-color);
 }
 
-/* QR 圖片 */
+td {
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Scan Specific Elements */
+.scan-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
 #qr-video {
-    max-width: 100%;
+    width: 100%;
+    max-width: 400px;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    background-color: #000;
 }
 
-/* QR 結果區域 */
 #qr-results {
     text-align: center;
-    margin-top: 20px;
+    background: #f1f5f9;
+    padding: 16px;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* QR 結果 */
 #cam-qr-result {
-    font-size: 1rem;
-    color: teal;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary);
     word-wrap: break-word;
-    margin-top: 10px;
+    margin: 0 0 4px 0;
 }
 
-/* QR 結果時間戳 */
 #cam-qr-result-timestamp {
-    font-size: 0.75rem;
-    color: #999;
-    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
-/* QR 列表 */
-#cam-list {
-    padding: 6px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: white;
-    margin-top: 10px;
+/* Admin Field Rows */
+.field-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: center;
 }
 
-/* 扫描成功消息 */
-.scan-success-message {
+.field-row input {
+    flex: 1;
+}
+
+/* Toasts (Animations) */
+.toast-container {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    width: 90%;
+    max-width: 500px;
+}
+
+.toast {
     width: 100%;
-    height: 100%;
-    background-color: rgba(0, 128, 0, 0.8);
+    padding: 20px 24px;
+    border-radius: 12px;
     color: white;
+    font-weight: 600;
+    font-size: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    z-index: 9999;
+    gap: 12px;
+    animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    text-align: center;
 }
 
-/* 扫描失败消息 */
-.scan-fail-message {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(235, 94, 0, 0.8);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    z-index: 9999;
+.toast.success {
+    background-color: var(--success);
 }
 
-/* 響應式設計 */
-@media (max-width: 600px) {
+.toast.error {
+    background-color: var(--danger);
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+.toast.hiding {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    nav {
+        padding: 0 16px;
+    }
+    
     .nav-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 
     nav a {
-        font-size: 0.9rem;
-        padding: 8px 12px;
+        padding: 6px 10px;
+        font-size: 0.85rem;
     }
 
-    select, input {
-        font-size: 0.9rem;
+    .content {
+        padding: 16px;
     }
 
-    button {
-        font-size: 0.9rem;
+    .form-container {
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    #cam-qr-result {
-        font-size: 0.9rem;
+    select, input, button {
+        width: 100%;
     }
 
-    #cam-qr-result-timestamp {
-        font-size: 0.65rem;
-    }
-
-    .scan-success-message, .scan-fail-message {
-        font-size: 1.2rem;
+    .field-row {
+        flex-direction: column;
     }
 }
