@@ -13,39 +13,28 @@
             <a href="/">報到</a>
             <a href="/search">查詢</a>
             <a href="/report" class="active">報表</a>
+            <a href="/admin">管理</a>
         </div>
     </nav>
 
     <div class="content">
         <div class="form-container">
             <div class="form-item">
-                <b>教會</b>
-                <select id="church-list">
-                    {{range .Church}}
-                        <option value="{{.Id}}">{{.Name}}</option>
-                    {{end}}
-                </select>
-            </div>
-            <div class="form-item">
-                <b>組別</b>
-                <select id="group-list">
-                    {{range .Group}}
-                        <option value="{{.}}">{{.}}</option>
-                    {{end}}
-                </select>
-            </div>
-            <div class="form-item">
-                <b>Team</b>
-                <select id="team-list">
-                    {{range .Team}}
-                        <option value="{{.}}">{{.}}</option>
-                    {{end}}
-                </select>
-            </div>
-            <div class="form-item">
                 <b>姓名</b>
                 <input type="text" id="name" name="name" />
             </div>
+            
+            {{range .SearchFields}}
+            <div class="form-item">
+                <b>{{.Label}}</b>
+                <select id="attr-{{.Key}}" class="dynamic-attr" data-key="{{.Key}}" data-label="{{.Label}}">
+                    {{range .Options}}
+                        <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+            </div>
+            {{end}}
+
             <div class="form-item">
                 <b>次數(大於等於)</b>
                 <select id="ge">
@@ -72,27 +61,28 @@
     </div>
     <script>
         document.getElementById('search-button').addEventListener('click', function () {
-            // Get selected values and input values
-            const church = document.getElementById('church-list').value;
-            const group = document.getElementById('group-list').value;
-            const team = document.getElementById('team-list').value;
             const name = document.getElementById('name').value;
             const ge = document.getElementById('ge').value;
             const le = document.getElementById('le').value;
 
+            const attributes = {};
+            const searchKeys = [];
+            const searchLabels = [];
+            
+            document.querySelectorAll('.dynamic-attr').forEach(el => {
+                attributes[el.dataset.key] = el.value;
+                searchKeys.push(el.dataset.key);
+                searchLabels.push(el.dataset.label);
+            });
     
-            // Create JSON object with the selected values
             const data = {
-                church: church,
-                group: group,
-                team: team,
                 name: name,
                 ge: ge,
                 le: le,
+                attributes: attributes
             };
     
-            // Send POST request to /search with the JSON data
-            fetch('/report', {
+            fetch('/api/report', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -101,44 +91,44 @@
             })
             .then(response => response.json())
             .then(result => {
-                console.log('Success:', result);
-    
-                // Find the table body element
                 const tableBody = document.querySelector('tbody');
                 const tableHead = document.querySelector('thead');
     
-                // Clear the existing rows in the table body
                 tableBody.innerHTML = '';
                 tableHead.innerHTML = '';
 
-                // Insert the table head
                 const headRow = document.createElement('tr');
+                let dynamicHeaders = '';
+                searchLabels.forEach(label => {
+                    dynamicHeaders += `<th>${label}</th>`;
+                });
+
                 headRow.innerHTML = `
-                    <th>教會</th>
-                    <th>組別</th>
-                    <th>Team</th>
+                    <th>ID</th>
                     <th>姓名</th>
+                    ${dynamicHeaders}
                     <th>次數</th>
                 `;
                 tableHead.appendChild(headRow);
     
-                if (result.length > 0) {
-                    // Iterate over the results and create new rows
+                if (result && result.length > 0) {
                     result.forEach(row => {
                         const tr = document.createElement('tr');
+                        let dynamicCols = '';
+                        searchKeys.forEach(k => {
+                            dynamicCols += `<td>${(row.attributes && row.attributes[k]) ? row.attributes[k] : ''}</td>`;
+                        });
                         tr.innerHTML = `
-                            <td>${row.Church}</td>
-                            <td>${row.Group}</td>
-                            <td>${row.Team}</td>
-                            <td>${row.Name}</td>
-                            <td>${row.Times}</td>
+                            <td>${row.id}</td>
+                            <td>${row.name}</td>
+                            ${dynamicCols}
+                            <td>${row.times}</td>
                         `;
                         tableBody.appendChild(tr);
                     });
                 } else {
-                    // If no results, show the "no results" row
                     const tr = document.createElement('tr');
-                    tr.innerHTML = '<td colspan="6">沒有查詢結果</td>';
+                    tr.innerHTML = `<td colspan="${3 + searchLabels.length}">沒有查詢結果</td>`;
                     tableBody.appendChild(tr);
                 }
             })
@@ -147,12 +137,8 @@
             });
         });
         
-        // 取得 select 元素
         const selectElement = document.getElementById('le');
-    
-        // 設定預設選擇最後一個 option
         selectElement.selectedIndex = selectElement.options.length - 1;
     </script>
-    
 </body>
 </html>

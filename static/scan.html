@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +19,7 @@
         }
     </style>
 </head>
+
 <body>
     <nav>
         <div class="nav-title">{{.Title}}</div>
@@ -25,15 +27,16 @@
             <a href="/" class="active">報到</a>
             <a href="/search">查詢</a>
             <a href="/report">報表</a>
+            <a href="/admin">管理</a>
         </div>
     </nav>
-    
+
     <div class="content">
         <div>
-            <b>场次:</b>
+            <b>場次:</b>
             <select id="act-list">
                 {{range .Acts}}
-                    <option value="{{.}}">{{.}}</option>
+                <option value="{{.}}">{{.}}</option>
                 {{end}}
             </select>
         </div>
@@ -66,41 +69,41 @@
 
         // Function to send scanned data to API server
         function sendDataToApiServer(data, ts, selectedAct) {
-            fetch('/checkin', {
+            fetch('/api/checkin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ scannedData: data, scannedTime: ts, selectedAct: selectedAct }),
             })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('API request failed');
-                }
-            })
-            .then(responseData => {
-                console.log('API response:', responseData);
-                // Show scan success message
-                const scanResultMessage = document.createElement('div');
-                scanResultMessage.textContent = data + ' 成功報到';
-                scanResultMessage.classList.add('scan-success-message');
-                document.body.appendChild(scanResultMessage);
-                setTimeout(() => {
-                    scanResultMessage.style.display = 'none'; // Hide success message
-                    qrResults.style.display = 'none'; // Hide QR result elements
-                }, 2000); // Hide after 2 seconds
-            })
-            .catch(error => {
-                console.error('Error sending data to API:', error);
-                // Show error message
-                const scanResultMessage = document.createElement('div');
-                scanResultMessage.textContent = '失敗';
-                scanResultMessage.classList.add('scan-fail-message');
-                document.body.appendChild(scanResultMessage);
-                setTimeout(() => scanResultMessage.style.display = 'none', 2000); // Hide after 2 seconds
-            });
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('API request failed');
+                    }
+                })
+                .then(responseData => {
+                    console.log('API response:', responseData);
+                    // Show scan success message
+                    const scanResultMessage = document.createElement('div');
+                    scanResultMessage.textContent = responseData.name + ' 報到成功';
+                    scanResultMessage.classList.add('scan-success-message');
+                    document.body.appendChild(scanResultMessage);
+                    setTimeout(() => {
+                        scanResultMessage.style.display = 'none'; // Hide success message
+                        qrResults.style.display = 'none'; // Hide QR result elements
+                    }, 2000); // Hide after 2 seconds
+                })
+                .catch(error => {
+                    console.error('Error sending data to API:', error);
+                    // Show error message
+                    const scanResultMessage = document.createElement('div');
+                    scanResultMessage.textContent = '報到失敗';
+                    scanResultMessage.classList.add('scan-fail-message');
+                    document.body.appendChild(scanResultMessage);
+                    setTimeout(() => scanResultMessage.style.display = 'none', 2000); // Hide after 2 seconds
+                });
         }
 
         // Function to start scanning with the selected camera
@@ -154,4 +157,5 @@
         });
     </script>
 </body>
+
 </html>

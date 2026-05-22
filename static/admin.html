@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
+    <style>
+        .admin-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .admin-section h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .field-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .toast {
+            display: none;
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="nav-title">{{.Title}}</div>
+        <div>
+            <a href="/">報到</a>
+            <a href="/search">查詢</a>
+            <a href="/report">報表</a>
+            <a href="/admin" class="active">管理</a>
+        </div>
+    </nav>
+    <div class="content" style="align-items: center;">
+
+        <div class="admin-section">
+            <h3>活動場次設定 (Acts)</h3>
+            <div class="form-group">
+                <label>請輸入場次名稱 (每行一個)</label>
+                <textarea id="acts-input" placeholder="例如:&#10;一晚&#10;二早"></textarea>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h3>查詢欄位設定 (Search Fields)</h3>
+            <p style="font-size: 14px; color: #666;">定義 JSON 屬性 Key 與對應的中文名稱。</p>
+            <div id="fields-container"></div>
+            <button type="button" class="btn" id="add-field-btn">+ 新增欄位</button>
+        </div>
+
+        <button type="button" class="btn btn-success" id="save-btn">儲存設定</button>
+        <div id="toast" class="toast">設定已成功儲存！</div>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchSettings();
+        });
+
+        function fetchSettings() {
+            fetch('/api/settings')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.acts) {
+                        document.getElementById('acts-input').value = data.acts.join('\n');
+                    }
+                    const container = document.getElementById('fields-container');
+                    container.innerHTML = '';
+                    if (data.search_fields) {
+                        data.search_fields.forEach(f => addFieldRow(f.key, f.label));
+                    }
+                });
+        }
+
+        function addFieldRow(key = '', label = '') {
+            const container = document.getElementById('fields-container');
+            const row = document.createElement('div');
+            row.className = 'field-row';
+            row.innerHTML = `
+                <input type="text" placeholder="JSON Key (例如: company)" value="${key}" class="f-key">
+                <input type="text" placeholder="顯示名稱 (例如: 公司)" value="${label}" class="f-label">
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">刪除</button>
+            `;
+            container.appendChild(row);
+        }
+
+        document.getElementById('add-field-btn').addEventListener('click', () => {
+            addFieldRow();
+        });
+
+        document.getElementById('save-btn').addEventListener('click', () => {
+            const actsText = document.getElementById('acts-input').value;
+            const acts = actsText.split('\n').map(a => a.trim()).filter(a => a !== '');
+
+            const searchFields = [];
+            document.querySelectorAll('.field-row').forEach(row => {
+                const key = row.querySelector('.f-key').value.trim();
+                const label = row.querySelector('.f-label').value.trim();
+                if (key && label) {
+                    searchFields.push({ key, label });
+                }
+            });
+
+            const payload = { acts, search_fields: searchFields };
+
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const toast = document.getElementById('toast');
+                    toast.style.display = 'block';
+                    setTimeout(() => toast.style.display = 'none', 3000);
+                })
+                .catch(err => {
+                    alert('儲存失敗');
+                    console.error(err);
+                });
+        });
+    </script>
+</body>
+
+</html>
