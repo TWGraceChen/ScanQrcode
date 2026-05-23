@@ -83,8 +83,9 @@ type DetailReport struct {
 }
 
 type SettingsPayload struct {
-	Acts         []string       `json:"acts"`
-	SearchFields []SettingField `json:"search_fields"`
+	Acts          []string       `json:"acts"`
+	SearchFields  []SettingField `json:"search_fields"`
+	AllowCrossAct bool           `json:"allow_cross_act"`
 }
 
 type TemplateScan struct {
@@ -178,6 +179,15 @@ func getSettings() SettingsPayload {
 	err = db.QueryRow("SELECT value FROM settings WHERE key = 'search_fields'").Scan(&searchFieldsJson)
 	if err == nil {
 		json.Unmarshal(searchFieldsJson, &payload.SearchFields)
+	}
+
+	var allowCrossActStr string
+	err = db.QueryRow("SELECT value FROM settings WHERE key = 'allow_cross_act'").Scan(&allowCrossActStr)
+	if err == nil {
+		payload.AllowCrossAct = allowCrossActStr == "true"
+	} else {
+		// 預設為不允許跨場次 (全域只能報到一次)
+		payload.AllowCrossAct = false
 	}
 
 	return payload
@@ -353,6 +363,38 @@ func handleCheckInAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// 檢查是否重複報到
+		settings := getSettings()
+		var count int
+		var checkQuery string
+		var checkArgs []interface{}
+
+		if settings.AllowCrossAct {
+			// 允許跨場次：檢查是否在「同一個場次」報到過
+			checkQuery = "SELECT count(*) FROM checkin WHERE id = $1 AND act = $2"
+			checkArgs = []interface{}{id, payload.SelectedAct}
+		} else {
+			// 不允許跨場次：檢查是否在「任何場次」報到過
+			checkQuery = "SELECT count(*) FROM checkin WHERE id = $1"
+			checkArgs = []interface{}{id}
+		}
+
+		err = db.QueryRow(checkQuery, checkArgs...).Scan(&count)
+		if err != nil {
+			log.Printf("Failed to check duplicate: %v", err)
+			http.Error(w, "Failed to check duplicate", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if count > 0 {
+			json.NewEncoder(w).Encode(map[string]string{
+				"name":    name,
+				"status":  "duplicate",
+			})
+			return
+		}
+
 		_, err = db.Exec(`
 			INSERT INTO checkin (time, act, id) 
 			VALUES ($1, $2, $3)
@@ -364,8 +406,10 @@ func handleCheckInAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"name": name})
+		json.NewEncoder(w).Encode(map[string]string{
+			"name":   name,
+			"status": "success",
+		})
 		return 
 	}
 	
@@ -548,11 +592,16 @@ func handleSettingsAPI(w http.ResponseWriter, r *http.Request) {
 
 		actsBytes, _ := json.Marshal(payload.Acts)
 		searchFieldsBytes, _ := json.Marshal(payload.SearchFields)
+		allowCrossActStr := "false"
+		if payload.AllowCrossAct {
+			allowCrossActStr = "true"
+		}
 
 		_, err1 := db.Exec("INSERT INTO settings (key, value) VALUES ('acts', $1) ON CONFLICT (key) DO UPDATE SET value = $1", string(actsBytes))
 		_, err2 := db.Exec("INSERT INTO settings (key, value) VALUES ('search_fields', $1) ON CONFLICT (key) DO UPDATE SET value = $1", string(searchFieldsBytes))
+		_, err3 := db.Exec("INSERT INTO settings (key, value) VALUES ('allow_cross_act', $1) ON CONFLICT (key) DO UPDATE SET value = $1", allowCrossActStr)
 
-		if err1 != nil || err2 != nil {
+		if err1 != nil || err2 != nil || err3 != nil {
 			http.Error(w, "Failed to update settings", http.StatusInternalServerError)
 			return
 		}

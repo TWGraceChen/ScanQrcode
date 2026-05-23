@@ -18,7 +18,7 @@
             <a href="/admin">管理</a>
         </div>
     </nav>
-    
+
     <div id="toast-container" class="toast-container"></div>
 
     <div class="content">
@@ -55,13 +55,19 @@
         const camQrResult = document.getElementById('cam-qr-result');
         const camQrResultTimestamp = document.getElementById('cam-qr-result-timestamp');
 
-        function showToast(message, isSuccess) {
+        function showToast(message, status) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = `toast ${isSuccess ? 'success' : 'error'}`;
-            toast.innerHTML = isSuccess ? `✅ ${message}` : `❌ ${message}`;
+            toast.className = `toast ${status}`;
+
+            let icon = '';
+            if (status === 'success') icon = '✅';
+            else if (status === 'error') icon = '❌';
+            else if (status === 'warning') icon = '⚠️';
+
+            toast.innerHTML = `${icon} ${message}`;
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.classList.add('hiding');
                 setTimeout(() => toast.remove(), 300);
@@ -86,14 +92,20 @@
                 })
                 .then(responseData => {
                     console.log('API response:', responseData);
-                    showToast(responseData.name + ' 報到成功', true);
+
+                    if (responseData.status === 'duplicate') {
+                        showToast(responseData.name + ' 重複報到', 'warning');
+                    } else {
+                        showToast(responseData.name + ' 報到成功', 'success');
+                    }
+
                     setTimeout(() => {
                         qrResults.style.display = 'none'; // Hide QR result elements
                     }, 2000); // Hide after 2 seconds
                 })
                 .catch(error => {
                     console.error('Error sending data to API:', error);
-                    showToast('報到失敗', false);
+                    showToast('報到失敗', 'error');
                 });
         }
 
@@ -111,7 +123,7 @@
                     if (scannedData === lastScannedData && (currentTime - lastScannedTime) < 3000) {
                         return;
                     }
-                    
+
                     lastScannedData = scannedData;
                     lastScannedTime = currentTime;
 
@@ -127,7 +139,7 @@
                     // Send scanned data to API server
                     sendDataToApiServer(scannedData, timestamp, selectedAct);
                 }
-                
+
                 // 忽略 ZXing 在連續掃描過程中正常的找不到或模糊例外，避免 console 報錯
                 if (err) {
                     if (ZXing && (

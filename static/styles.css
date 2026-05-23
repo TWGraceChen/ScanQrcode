@@ -162,6 +162,14 @@ textarea {
     resize: vertical;
 }
 
+input[type="radio"], input[type="checkbox"] {
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    margin-right: 6px;
+    cursor: pointer;
+}
+
 select:focus, input:focus, textarea:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
@@ -351,6 +359,11 @@ tbody tr:last-child td {
 
 .toast.error {
     background-color: var(--danger);
+}
+
+.toast.warning {
+    background-color: #f59e0b; /* Amber 500 */
+    color: white;
 }
 
 @keyframes slideDown {

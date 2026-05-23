@@ -27,6 +27,18 @@
                 <label>請輸入場次名稱 (每行一個)</label>
                 <textarea id="acts-input" placeholder="例如:&#10;一晚&#10;二早"></textarea>
             </div>
+            
+            <p style="font-size: 14px; color: #666; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">設定人員報到時的跨場次限制：</p>
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="font-weight: normal; cursor: pointer;">
+                    <input type="radio" name="cross_act" value="false" id="cross-act-false">
+                    <b>不允許跨場次重複 (預設)</b> - 每人全活動總共只能報到一次 (跨場次掃描會出現黃色警示)
+                </label>
+                <label style="font-weight: normal; cursor: pointer;">
+                    <input type="radio" name="cross_act" value="true" id="cross-act-true">
+                    <b>允許跨場次重複</b> - 每人在「不同的場次」皆可報到一次 (但同場次掃描兩次仍會警示)
+                </label>
+            </div>
         </div>
 
         <div class="card admin-section">
@@ -70,6 +82,12 @@
                     if (data.search_fields) {
                         data.search_fields.forEach(f => addFieldRow(f.key, f.label));
                     }
+                    
+                    if (data.allow_cross_act) {
+                        document.getElementById('cross-act-true').checked = true;
+                    } else {
+                        document.getElementById('cross-act-false').checked = true;
+                    }
                 });
         }
 
@@ -102,7 +120,9 @@
                 }
             });
 
-            const payload = { acts, search_fields: searchFields };
+            const allowCrossAct = document.getElementById('cross-act-true').checked;
+
+            const payload = { acts, search_fields: searchFields, allow_cross_act: allowCrossAct };
 
             fetch('/api/settings', {
                 method: 'POST',
