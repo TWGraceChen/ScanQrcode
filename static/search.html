@@ -48,6 +48,10 @@
             </div>
         </div>
         <!-- Results Table -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; margin-top: 12px;">
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">查詢結果</h3>
+            <div id="total-count" class="total-count-badge" style="display: none;"></div>
+        </div>
         <div class="table-container">
             <table>
                 <thead></thead>
@@ -98,6 +102,7 @@
                 });
 
                 headRow.innerHTML = `
+                    <th>序號</th>
                     <th>ID</th>
                     <th>姓名</th>
                     ${dynamicHeaders}
@@ -106,14 +111,19 @@
                 `;
                 tableHead.appendChild(headRow);
     
+                const totalCountDiv = document.getElementById('total-count');
+                const userIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px; margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>`;
                 if (result && result.length > 0) {
-                    result.forEach(row => {
+                    totalCountDiv.style.display = 'inline-flex';
+                    totalCountDiv.innerHTML = `${userIconSVG}總人數: ${result.length}`;
+                    result.forEach((row, index) => {
                         const tr = document.createElement('tr');
                         let dynamicCols = '';
                         searchKeys.forEach(k => {
                             dynamicCols += `<td>${(row.attributes && row.attributes[k]) ? row.attributes[k] : ''}</td>`;
                         });
                         tr.innerHTML = `
+                            <td>${index + 1}</td>
                             <td>${row.id}</td>
                             <td>${row.name}</td>
                             ${dynamicCols}
@@ -123,8 +133,10 @@
                         tableBody.appendChild(tr);
                     });
                 } else {
+                    totalCountDiv.style.display = 'inline-flex';
+                    totalCountDiv.innerHTML = `${userIconSVG}總人數: 0`;
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td colspan="${4 + searchLabels.length}">沒有查詢結果</td>`;
+                    tr.innerHTML = `<td colspan="${5 + searchLabels.length}">沒有查詢結果</td>`;
                     tableBody.appendChild(tr);
                 }
             })

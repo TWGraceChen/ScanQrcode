@@ -420,3 +420,21 @@ tbody tr:last-child td {
         flex-direction: column;
     }
 }
+
+/* Custom Badges */
+.total-count-badge {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3), 0 2px 4px -1px rgba(79, 70, 229, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.total-count-badge:hover {
+    transform: translateY(-1px);
+}
